@@ -25,6 +25,7 @@ from blivet.deviceaction import *
 from blivet.devices import LUKSDevice
 from blivet.devicelibs.lvm import getPossiblePhysicalExtents
 from blivet.devicelibs import swap
+from blivet.errors import PartitioningError
 from blivet.formats import getFormat
 from blivet.partitioning import doPartitioning
 from blivet.partitioning import growLVM
@@ -951,5 +952,8 @@ class NixKickstart(object):
         self.handler.volgroup.execute(self.storage, self.handler)
         self.handler.logvol.execute(self.storage, self.handler)
         self.handler.btrfs.execute(self.storage, self.handler)
+        errors, warnings = self.storage.sanityCheck()
+        if errors:
+            raise PartitioningError("\n".join(errors))
         self.storage.doIt()
         return self.storage
