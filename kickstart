@@ -1,0 +1,27 @@
+#!/usr/bin/env python
+import argparse
+
+from nixkickstart import NixKickstart
+
+def main():
+    desc = "Create partitions and filesystems based on a kickstart file"
+    parser = argparse.ArgumentParser(description=desc)
+    parser.add_argument(
+        'kickstart_file', type=argparse.FileType('r'),
+        help="An Anaconda kickstart file (see "
+             "http://fedoraproject.org/wiki/Anaconda/Kickstart"
+             "for format)"
+    )
+
+    args = parser.parse_args()
+
+    ks = NixKickstart(args.kickstart_file.read())
+    storage = ks.run()
+
+    print("Done with partitioning, this is the final layout:")
+
+    for device in storage.devices:
+        print(device)
+
+if __name__ == '__main__':
+    main()
