@@ -1,7 +1,42 @@
 #!/usr/bin/env python
+import sys
+import string
 import argparse
 
 from nixkickstart import NixKickstart
+
+def indent(ind, val=""):
+    return "  " * ind + val
+
+def mkattr(attrs, pre, post, ind):
+    out = ""
+    for key, val in attrs.iteritems():
+        if not not set(key) - set(string.ascii_letters + string.digits):
+            key = '"{0}"'.format(key.replace('"', r'\"'))
+        out += pre + "{0} = {1};".format(key, nixify(val, ind + 1)) + post
+    return out
+
+def nixify(data, ind=0):
+    out = ""
+    if isinstance(data, dict):
+        if len(data) == 0:
+            out += "{}"
+        if len(data) == 0 or (len(data) == 1 and
+                              not isinstance(data.values()[0], dict)):
+            out += "{" + mkattr(data, " ", " ", ind) + "}"
+        else:
+            out += "{\n" + mkattr(data, indent(ind + 1), "\n", ind)
+            out += indent(ind, "}")
+    elif isinstance(data, list):
+        out = "[\n"
+        for item in data:
+            out += indent(ind + 1) + nixify(item, ind + 1) + "\n"
+        out += indent(ind) + "]"
+    elif isinstance(data, int):
+        out += str(data)
+    else:
+        out += '"{0}"'.format(data.replace('"', r'\"'))
+    return out
 
 def main():
     desc = "Create partitions and filesystems based on a kickstart file"
@@ -18,10 +53,34 @@ def main():
     ks = NixKickstart(args.kickstart_file.read())
     storage = ks.run()
 
-    print("Done with partitioning, this is the final layout:")
+    swaps = []
+    fstab = {}
 
     for device in storage.devices:
-        print(device)
+        label = getattr(device.format, "label", None)
+        mount = getattr(device.format, "mountpoint", None)
+        path = device.path
+
+        if device.format.type == "swap":
+            if label is not None:
+                swaps.append({'label': label})
+            else:
+                swaps.append({'device': path})
+        elif mount is not None and len(mount) > 0:
+            fs = {}
+            if label is not None:
+                fs['label'] = label
+            else:
+                fs['device'] = path
+            fs['type'] = device.format.type
+            fstab[mount] = fs
+
+    conf = {
+        'swapDevices': swaps,
+        'fileSystems': fstab,
+    }
+
+    sys.stdout.write(nixify(conf) + "\n")
 
 if __name__ == '__main__':
     main()
