@@ -928,6 +928,7 @@ class NixKickstart(object):
         # monkey patching
         ksparser = KickstartParser(self.handler, followIncludes=False)
         ksparser.readKickstartFromString(ks_script)
+        blivet.findExistingInstallations = lambda d: []
         blivet.flags.installer_mode = True
         blivet.get_bootloader = MonkeyBootLoader
         blivet.Blivet.bootDisk = property(lambda s: None)
