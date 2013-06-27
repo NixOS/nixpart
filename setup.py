@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-setup(name='nixkickstart',
+setup(name='nixpart',
       version='0.1',
-      scripts=["kickstart"],
+      scripts=["nixpart"],
       py_modules=["nixkickstart"])
