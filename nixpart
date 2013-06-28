@@ -2,6 +2,7 @@
 import sys
 import string
 import argparse
+import logging
 
 from nixkickstart import NixKickstart
 
@@ -45,6 +46,11 @@ def nixify(data, ind=0):
 def main():
     desc = "Create partitions and filesystems based on a kickstart file"
     parser = argparse.ArgumentParser(description=desc)
+
+    parser.add_argument('-v', '--verbose', dest='verbose',
+                        action='store_true',
+                        help="Show executed commands.")
+
     parser.add_argument(
         'kickstart_file', type=argparse.FileType('r'),
         help="An Anaconda kickstart file (see "
@@ -53,6 +59,11 @@ def main():
     )
 
     args = parser.parse_args()
+
+    if args.verbose:
+        program_log = logging.getLogger("program")
+        program_log.setLevel(logging.DEBUG)
+        program_log.addHandler(logging.StreamHandler(sys.stderr))
 
     ks = NixKickstart(args.kickstart_file.read())
     storage = ks.run()
