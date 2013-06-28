@@ -5,8 +5,10 @@ import argparse
 
 from nixkickstart import NixKickstart
 
+
 def indent(ind, val=""):
     return "  " * ind + val
+
 
 def mkattr(attrs, pre, post, ind):
     out = ""
@@ -15,6 +17,7 @@ def mkattr(attrs, pre, post, ind):
             key = '"{0}"'.format(key.replace('"', r'\"'))
         out += pre + "{0} = {1};".format(key, nixify(val, ind + 1)) + post
     return out
+
 
 def nixify(data, ind=0):
     out = ""
@@ -37,6 +40,7 @@ def nixify(data, ind=0):
     else:
         out += '"{0}"'.format(data.replace('"', r'\"'))
     return out
+
 
 def main():
     desc = "Create partitions and filesystems based on a kickstart file"
