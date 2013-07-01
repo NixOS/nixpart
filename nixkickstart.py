@@ -936,7 +936,7 @@ class NixKickstart(object):
 
         self.storage = blivet.Blivet(self.handler)
 
-    def run(self):
+    def initialize(self):
         blivet.platform.reset_platform()
 
         self.storage.shutdown()
@@ -953,8 +953,26 @@ class NixKickstart(object):
         self.handler.volgroup.execute(self.storage, self.handler)
         self.handler.logvol.execute(self.storage, self.handler)
         self.handler.btrfs.execute(self.storage, self.handler)
+
+    def partition(self):
         errors, warnings = self.storage.sanityCheck()
         if errors:
             raise PartitioningError("\n".join(errors))
         self.storage.doIt()
+
+    def mount(self):
+        devices = self.storage.fsset.mountpoints.values()
+        devices.sort(key=lambda dev: getattr(dev.format, "mountpoint", None))
+        for device in devices:
+            if not device.format.mountable or not device.format.mountpoint:
+                continue
+            if device.format.type == "bind":
+                continue
+            device.setup()
+            device.format.setup(device.format.options, chroot="/mnt")
+
+    def run(self):
+        self.initialize()
+        self.partition()
+        self.mount()
         return self.storage
