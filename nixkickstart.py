@@ -33,6 +33,7 @@ from blivet import udev
 import blivet.arch
 import blivet.platform
 import blivet
+import blivet.devicelibs.mdraid
 
 import glob
 import os
@@ -912,6 +913,7 @@ def get_kshandler():
     cls = returnClassForVersion()
     return cls(mapping=nixos_cmd_map, dataMapping=nixos_data_map)
 
+
 class MonkeyBootLoader(object):
     """
     Heavy monkey-patching, we don't want blivet to do anything regarding the
@@ -920,10 +922,39 @@ class MonkeyBootLoader(object):
     skip_bootloader = True
     set_disk_list = lambda s, d: None
 
+
+def monkey_mdactivate(device, members=[], uuid=None):
+    """
+    Enforce a super-minor for activation of mdraid.
+    """
+    if uuid is not None:
+        maybe_identifier = ["--uuid=%s" % uuid]
+    else:
+        only_digits = ''.join([val for val in device if val.isdigit()])
+        if len(only_digits) > 0:
+            super_minor = int(only_digits)
+        else:
+            super_minor = 0
+        # XXX: Might need to implement this?
+        maybe_identifier = []
+
+    args = ["--assemble", device] + maybe_identifier + ["--run"]
+    args += members
+
+    try:
+        blivet.devicelibs.mdraid.mdadm(args)
+    except blivet.devicelibs.mdraid.MDRaidError as msg:
+        raise blivet.devicelibs.mdraid.MDRaidError(
+            "mdactivate failed for %s: %s" % (device, msg)
+        )
+blivet.devicelibs.mdraid.mdactivate = monkey_mdactivate
+
+
 class NixKickstart(object):
-    def __init__(self, ks_script):
+    def __init__(self, ks_script, mount_only=False):
         self.handler = get_kshandler()
         self.handler.onPart = {}
+        self.mount_only = mount_only
 
         # monkey patching
         ksparser = KickstartParser(self.handler, followIncludes=False)
@@ -960,6 +991,29 @@ class NixKickstart(object):
             raise PartitioningError("\n".join(errors))
         self.storage.doIt()
 
+    def force_device_exists(self, device, child=None):
+        """
+        Let's pretend the filesystem exists, otherwise blivet will refuse to
+        mount. We need to recurse through all parents, so we're not missing
+        prerequisites such as RAID, LVM or LUKS.
+        """
+        if device.exists and device.format.exists:
+            return
+
+        for parent in device.parents:
+            self.force_device_exists(parent, child=device)
+
+        device.exists = True
+        device.setup()
+        device.format.device = device.path
+        device.format.exists = True
+
+        if device.format.type == 'luks':
+            # We need to do early format setup for LUKS here, because we need
+            # to pre-inject the mapper name.
+            device.format.mapName = child.mapName
+            device.format.setup(device.format.options, chroot="/mnt")
+
     def mount(self):
         devices = self.storage.fsset.mountpoints.values()
         devices.sort(key=lambda dev: getattr(dev.format, "mountpoint", None))
@@ -968,11 +1022,15 @@ class NixKickstart(object):
                 continue
             if device.format.type == "bind":
                 continue
-            device.setup()
+            if self.mount_only:
+                self.force_device_exists(device)
+            else:
+                device.setup()
             device.format.setup(device.format.options, chroot="/mnt")
 
     def run(self):
         self.initialize()
-        self.partition()
+        if not self.mount_only:
+            self.partition()
         self.mount()
         return self.storage

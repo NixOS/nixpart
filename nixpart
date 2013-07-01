@@ -51,6 +51,10 @@ def main():
                         action='store_true',
                         help="Show executed commands.")
 
+    parser.add_argument('-m', '--mount-only', dest='mountonly',
+                        action='store_true',
+                        help="Only try to mount partitions.")
+
     parser.add_argument(
         'kickstart_file', type=argparse.FileType('r'),
         help="An Anaconda kickstart file (see "
@@ -65,7 +69,8 @@ def main():
         program_log.setLevel(logging.DEBUG)
         program_log.addHandler(logging.StreamHandler(sys.stderr))
 
-    ks = NixKickstart(args.kickstart_file.read().replace("\\\n", ""))
+    ks = NixKickstart(args.kickstart_file.read().replace("\\\n", ""),
+                      mount_only=args.mountonly)
     storage = ks.run()
 
     swaps = []
