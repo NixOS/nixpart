@@ -65,7 +65,7 @@ def main():
         program_log.setLevel(logging.DEBUG)
         program_log.addHandler(logging.StreamHandler(sys.stderr))
 
-    ks = NixKickstart(args.kickstart_file.read())
+    ks = NixKickstart(args.kickstart_file.read().replace("\\\n", ""))
     storage = ks.run()
 
     swaps = []
