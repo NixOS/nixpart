@@ -92,7 +92,7 @@ def main():
                 fs['label'] = label
             else:
                 fs['device'] = path
-            fs['type'] = device.format.type
+            fs['fsType'] = device.format.type
             fstab[mount] = fs
 
     conf = {
