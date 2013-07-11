@@ -45,12 +45,16 @@ def nixify(data, ind=0):
 
 def get_nixos_config(storage):
     swaps = []
+    grub_devices = []
     fstab = {}
 
     for device in storage.devices:
         label = getattr(device.format, "label", None)
         mount = getattr(device.format, "mountpoint", None)
         path = device.path
+
+        if device.format.type in ("biosboot", "disklabel"):
+            grub_devices.append(path)
 
         if device.format.type == "swap":
             if label is not None:
@@ -70,6 +74,9 @@ def get_nixos_config(storage):
         'swapDevices': swaps,
         'fileSystems': fstab,
     }
+
+    if len(grub_devices) > 0:
+        conf['boot'] = {'loader': {'grub': {'devices': grub_devices}}}
 
     return nixify(conf) + "\n"
 
