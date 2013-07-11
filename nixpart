@@ -43,36 +43,7 @@ def nixify(data, ind=0):
     return out
 
 
-def main():
-    desc = "Create partitions and filesystems based on a kickstart file"
-    parser = argparse.ArgumentParser(description=desc)
-
-    parser.add_argument('-v', '--verbose', dest='verbose',
-                        action='store_true',
-                        help="Show executed commands.")
-
-    parser.add_argument('-m', '--mount-only', dest='mountonly',
-                        action='store_true',
-                        help="Only try to mount partitions.")
-
-    parser.add_argument(
-        'kickstart_file', type=argparse.FileType('r'),
-        help="An Anaconda kickstart file (see "
-             "http://fedoraproject.org/wiki/Anaconda/Kickstart"
-             "for format)"
-    )
-
-    args = parser.parse_args()
-
-    if args.verbose:
-        program_log = logging.getLogger("program")
-        program_log.setLevel(logging.DEBUG)
-        program_log.addHandler(logging.StreamHandler(sys.stderr))
-
-    ks = NixKickstart(args.kickstart_file.read().replace("\\\n", ""),
-                      mount_only=args.mountonly)
-    storage = ks.run()
-
+def get_nixos_config(storage):
     swaps = []
     fstab = {}
 
@@ -100,7 +71,45 @@ def main():
         'fileSystems': fstab,
     }
 
-    sys.stdout.write(nixify(conf) + "\n")
+    return nixify(conf) + "\n"
+
+
+def main():
+    desc = "Create partitions and filesystems based on a kickstart file"
+    parser = argparse.ArgumentParser(description=desc)
+
+    parser.add_argument('-v', '--verbose', dest='verbose',
+                        action='store_true',
+                        help="Show executed commands.")
+
+    parser.add_argument('-m', '--mount-only', dest='mountonly',
+                        action='store_true',
+                        help="Only try to mount partitions.")
+
+    parser.add_argument('-p', '--print-nixos', dest='printnixos',
+                        action='store_true',
+                        help="Print NixOS device/fileSystem attributes")
+
+    parser.add_argument(
+        'kickstart_file', type=argparse.FileType('r'),
+        help="An Anaconda kickstart file (see "
+             "http://fedoraproject.org/wiki/Anaconda/Kickstart"
+             "for format)"
+    )
+
+    args = parser.parse_args()
+
+    if args.verbose:
+        program_log = logging.getLogger("program")
+        program_log.setLevel(logging.DEBUG)
+        program_log.addHandler(logging.StreamHandler(sys.stderr))
+
+    ks = NixKickstart(args.kickstart_file.read().replace("\\\n", ""),
+                      mount_only=args.mountonly)
+    storage = ks.run()
+
+    if args.printnixos:
+        sys.stdout.write(get_nixos_config(storage))
 
 if __name__ == '__main__':
     main()
