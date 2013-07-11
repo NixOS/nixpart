@@ -14,7 +14,8 @@ def indent(ind, val=""):
 def mkattr(attrs, pre, post, ind):
     out = ""
     for key, val in attrs.iteritems():
-        if not not set(key) - set(string.ascii_letters + string.digits):
+        # XXX: Remove "." after fixing up pretty printer.
+        if not not set(key) - set(string.ascii_letters + string.digits + "."):
             key = '"{0}"'.format(key.replace('"', r'\"'))
         out += pre + "{0} = {1};".format(key, nixify(val, ind + 1)) + post
     return out
@@ -76,7 +77,7 @@ def get_nixos_config(storage):
     }
 
     if len(grub_devices) > 0:
-        conf['boot'] = {'loader': {'grub': {'devices': grub_devices}}}
+        conf['boot.loader.grub.devices'] = grub_devices
 
     return nixify(conf) + "\n"
 
