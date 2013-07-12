@@ -4,6 +4,8 @@ import string
 import argparse
 import logging
 
+import _ped
+
 from nixkickstart import NixKickstart
 
 
@@ -113,7 +115,16 @@ def main():
 
     ks = NixKickstart(args.kickstart_file.read().replace("\\\n", ""),
                       mount_only=args.mountonly)
-    storage = ks.run()
+    try:
+        storage = ks.run()
+    except _ped.IOException as exc:
+        # Quite ugly, but this is because the message is printed by the gparted
+        # itself and we can't influence it directly on our end.
+        if "should reboot now" in exc.message:
+            sys.stderr.write(exc.message + '\n')
+            sys.exit(100)
+        else:
+            raise
 
     if args.printnixos:
         sys.stdout.write(get_nixos_config(storage))
