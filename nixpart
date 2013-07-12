@@ -54,10 +54,9 @@ def get_nixos_config(storage):
         mount = getattr(device.format, "mountpoint", None)
         path = device.path
 
-        if device.format.type in ("biosboot", "disklabel"):
+        if device.format.type == "disklabel":
             grub_devices.append(path)
-
-        if device.format.type == "swap":
+        elif device.format.type == "swap":
             if label is not None:
                 swaps.append({'label': label})
             else:
