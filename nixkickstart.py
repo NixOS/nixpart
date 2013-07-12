@@ -1028,8 +1028,9 @@ class NixKickstart(object):
                 device.setup()
             device.format.setup(device.format.options, chroot="/mnt")
 
-    def run(self):
-        self.initialize()
+    def run(self, init=True):
+        if init:
+            self.initialize()
         if not self.mount_only:
             self.partition()
         self.mount()

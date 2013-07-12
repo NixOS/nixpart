@@ -99,6 +99,12 @@ def main():
                         action='store_true',
                         help="Print NixOS device/fileSystem attributes")
 
+    parser.add_argument('-L', '--no-label-partitions', dest='labelparts',
+                        action='store_false',
+                        help="Don't automatically create partitions for"
+                             " platform-specific disklabels (biosboot on"
+                             " GPT for example)")
+
     parser.add_argument(
         'kickstart_file', type=argparse.FileType('r'),
         help="An Anaconda kickstart file (see "
@@ -113,10 +119,36 @@ def main():
         program_log.setLevel(logging.DEBUG)
         program_log.addHandler(logging.StreamHandler(sys.stderr))
 
-    ks = NixKickstart(args.kickstart_file.read().replace("\\\n", ""),
-                      mount_only=args.mountonly)
+    kickstart = args.kickstart_file.read().replace("\\\n", "")
+
+    ks = NixKickstart(kickstart, mount_only=args.mountonly)
+    ks.initialize()
+
+    # XXX: BIG workaround here. We really should add the partition to the
+    #      device tree instead of "patching" the kickstart file and re-run.
+    if args.labelparts:
+        add_to_ks = []
+        for device in ks.storage.devices:
+            if device.format.type != "disklabel":
+                continue
+            if device.format.labelType != "gpt":
+                continue
+
+            cmd = [
+                "part",
+                "biosboot{0}".format(len(add_to_ks) + 1),
+                "--fstype=biosboot",
+                "--size=1",
+                "--ondisk={0}".format(device.name),
+            ]
+            add_to_ks.append(' '.join(cmd))
+        if len(add_to_ks) > 0:
+            new_kickstart = kickstart + '\n' + '\n'.join(add_to_ks) + '\n'
+            ks = NixKickstart(new_kickstart, mount_only=args.mountonly)
+            ks.initialize()
+
     try:
-        storage = ks.run()
+        storage = ks.run(init=False)
     except _ped.IOException as exc:
         # Quite ugly, but this is because the message is printed by the gparted
         # itself and we can't influence it directly on our end.
