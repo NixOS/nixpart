@@ -24,6 +24,7 @@
 from blivet.deviceaction import *
 from blivet.devices import LUKSDevice
 from blivet.devicelibs.lvm import getPossiblePhysicalExtents
+from blivet.devicelibs.btrfs import scan_device
 from blivet.devicelibs import swap
 from blivet.errors import PartitioningError
 from blivet.formats import getFormat
@@ -1007,6 +1008,10 @@ class NixKickstart(object):
         device.setup()
         device.format.device = device.path
         device.format.exists = True
+
+        # We need to issue a "btrfs device scan" before we can mount the FS.
+        if device.format.type == 'btrfs':
+            scan_device(device.path)
 
         if device.format.type == 'luks':
             # We need to do early format setup for LUKS here, because we need
