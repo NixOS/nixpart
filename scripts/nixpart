@@ -6,7 +6,7 @@ import logging
 
 import _ped
 
-from nixkickstart import NixKickstart
+from nixpart.nixkickstart import NixKickstart
 
 
 def indent(ind, val=""):
