@@ -67,6 +67,9 @@ def get_nixos_config(storage):
             fs = {}
             if label is not None:
                 fs['label'] = label
+            elif device.type == 'btrfs subvolume':
+                fs['label'] = device.volume.name
+                fs['options'] = device.format.mountopts
             else:
                 fs['device'] = path
             fs['fsType'] = device.format.type
