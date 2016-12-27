@@ -93,7 +93,18 @@ def main():
     args = parser.parse_args()
 
     if args.verbosity > 0:
-        pass  # TODO!
+        levels = [logging.INFO, logging.DEBUG]
+        if args.verbosity > len(levels):
+            level = levels[-1]
+        else:
+            level = levels[args.verbosity - 1]
+
+        handler = logging.StreamHandler(sys.stderr)
+
+        for name in ['blivet', 'program']:
+            logger = logging.getLogger(name)
+            logger.setLevel(level)
+            logger.addHandler(handler)
 
     if args.is_xml:
         rawxml = open(args.nixos_config, 'r').read()
