@@ -8,7 +8,7 @@ PYTHON_MODULES = [
     'nixpart',
     'nixpart.main',
     'nixpart.storage',
-    'nixpart.tests',
+    'nixpart.tests.args',
 ]
 
 
@@ -18,7 +18,7 @@ class RunTests(Command):
     initialize_options = finalize_options = lambda self: None
 
     def run(self):
-        tests = TestLoader().loadTestsFromName('nixpart.tests')
+        tests = TestLoader().discover('nixpart.tests', pattern='*.py')
         result = TextTestRunner(verbosity=1).run(tests)
         sys.exit(not result.wasSuccessful())
 
