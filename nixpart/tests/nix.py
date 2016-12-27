@@ -6,6 +6,13 @@ import tempfile
 from nixpart import nix
 
 
+def has_nix_instantiate():
+    """
+    Check whether nix-instantiate is available.
+    """
+    return shutil.which('nix-instantiate') is not None
+
+
 def has_nixpkgs():
     """
     Check whether <nixpkgs> is available in NIX_PATH
@@ -70,10 +77,12 @@ class NixConfigTest(unittest.TestCase):
 
 
 @unittest.skipUnless(has_nixpkgs(), "no <nixpkgs> available")
+@unittest.skipUnless(has_nix_instantiate(), "no nix-instantiate available")
 class ParseFullNixConfigTest(NixConfigTest):
     pass
 
 
+@unittest.skipUnless(has_nix_instantiate(), "no nix-instantiate available")
 class ParseMockNixConfigTest(NixConfigTest):
     def setUp(self):
         super().setUp()
