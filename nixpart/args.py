@@ -20,13 +20,13 @@ def parse_args(args=None):
     )
 
     parser.add_argument(
-        '-X', '--from-xml', dest='is_xml', action='store_true',
-        help="The NixOS config file in XML format"
+        '-X', '--xml', dest='is_xml', action='store_true',
+        help="The provided NixOS configuration file is in XML format"
     )
 
     parser.add_argument(
         'nixos_config', type=handle_nixos_config,
-        help="A NixOS configuration expression file"
+        help="A NixOS configuration file"
     )
 
     return parser.parse_args(args=args)
