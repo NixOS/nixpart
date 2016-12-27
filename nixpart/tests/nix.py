@@ -2,6 +2,7 @@ import os
 import shutil
 import unittest
 import tempfile
+import subprocess
 
 from xml.etree import ElementTree
 
@@ -36,6 +37,8 @@ class NixConfigTest(unittest.TestCase):
         self.statedir = tempfile.mkdtemp()
         self.old_env = os.environ.copy()
         os.environ['NIX_STATE_DIR'] = self.statedir
+        os.environ['NIX_STORE_DIR'] = self.statedir
+        subprocess.check_call(['nix-store', '--init'])
 
     def tearDown(self):
         shutil.rmtree(self.statedir, ignore_errors=True)
