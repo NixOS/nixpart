@@ -1,12 +1,11 @@
-import os
 import re
 import sys
-import argparse
 import logging
 import subprocess
 
 from xml.etree import ElementTree
 
+from nixpart.args import parse_args
 from nixpart.storage import realize
 
 XMLDECL_RE = re.compile(r'<\?xml.*?>')
@@ -63,34 +62,8 @@ def nix2python(path):
     return xml2python(xml[0])
 
 
-def handle_nixos_config(path):
-    fullpath = os.path.abspath(path)
-    if not os.path.exists(fullpath):
-        msg = "{} does not exist.".format(fullpath)
-        raise argparse.ArgumentTypeError(msg)
-    return fullpath
-
-
 def main():
-    desc = "Declaratively create partitions and filesystems"
-    parser = argparse.ArgumentParser(description=desc)
-
-    parser.add_argument(
-        '-v', '--verbose', dest='verbosity', action='count', default=0,
-        help="Print what's going on, use multiple times to increase verbosity"
-    )
-
-    parser.add_argument(
-        '-X', '--from-xml', dest='is_xml', action='store_true',
-        help="The NixOS config file in XML format"
-    )
-
-    parser.add_argument(
-        'nixos_config', type=handle_nixos_config,
-        help="A NixOS configuration expression file"
-    )
-
-    args = parser.parse_args()
+    args = parse_args()
 
     if args.verbosity > 0:
         levels = [logging.INFO, logging.DEBUG]
