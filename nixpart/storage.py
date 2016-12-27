@@ -52,6 +52,9 @@ def realize(expr):
             continue
         target = storagetree.get(attrs['storage'])
         fmt = blivet.formats.get_format(attrs['fsType'], device=target.path)
+        label = attrs.get('label')
+        if label is not None:
+            fmt.label = label
         b.format_device(target, fmt)
 
     do_partitioning(b)
