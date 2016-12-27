@@ -18,10 +18,10 @@ def xmlnode2python(xml):
         attrset = {}
         for child in xml:
             for subchild in child:
-                attrset[child.attrib['name']] = xml2python(subchild)
+                attrset[child.attrib['name']] = xmlnode2python(subchild)
         return attrset
     elif xml.tag == 'list':
-        return [xml2python(child) for child in xml]
+        return [xmlnode2python(child) for child in xml]
     elif xml.tag in ('string', 'path'):
         return xml.attrib['value']
     elif xml.tag == 'bool':
