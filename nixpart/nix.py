@@ -1,9 +1,6 @@
-import re
 import subprocess
 
 from xml.etree import ElementTree
-
-XMLDECL_RE = re.compile(r'<\?xml.*?>')
 
 
 class NixDecodeError(Exception):
