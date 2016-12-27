@@ -7,6 +7,7 @@ from unittest import TextTestRunner, TestLoader
 PYTHON_MODULES = [
     'nixpart',
     'nixpart.main',
+    'nixpart.storage',
     'nixpart.tests',
 ]
 

@@ -7,6 +7,8 @@ import subprocess
 
 from xml.etree import ElementTree
 
+from nixpart.storage import realize
+
 XMLDECL_RE = re.compile(r'<\?xml.*?>')
 
 
@@ -103,4 +105,4 @@ def main():
     else:
         expr = nix2python(args.nixos_config)
 
-    # TODO: partitioning!
+    realize(expr)
