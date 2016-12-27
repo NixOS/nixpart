@@ -3,6 +3,8 @@ import shutil
 import unittest
 import tempfile
 
+from xml.etree import ElementTree
+
 from nixpart import nix
 
 
@@ -39,7 +41,36 @@ class NixConfigTest(unittest.TestCase):
         shutil.rmtree(self.statedir, ignore_errors=True)
         os.environ = self.old_env
 
-    def test_full_nixpkgs(self):
+    def assert_simple_example(self, result, has_unrelated=False):
+        self.assertIn('storage', result)
+        storage = result['storage']
+
+        self.assertIn('disk', storage)
+        self.assertIn('sda', storage['disk'])
+        self.assertIn('clear', storage['disk']['sda'])
+        self.assertEqual(True, storage['disk']['sda']['clear'])
+
+        self.assertIn('partition', storage)
+        self.assertIn('root', storage['partition'])
+        self.assertIn('targetDevice', storage['partition']['root'])
+        self.assertEqual('disk.sda',
+                         storage['partition']['root']['targetDevice'])
+
+        self.assertIn('fileSystems', result)
+        self.assertIn('/', result['fileSystems'])
+        self.assertIn('storage', result['fileSystems']['/'])
+        self.assertEqual('partition.root',
+                         result['fileSystems']['/']['storage'])
+
+        if has_unrelated:
+            self.assertIn('networking', result)
+            self.assertIn('hostName', result['networking'])
+            self.assertEqual('unrelatedOption',
+                             result['networking']['hostName'])
+        else:
+            self.assertNotIn('networking', result)
+
+    def test_simple_example(self):
         simple_cfg = b'''
         {
           storage.disk.sda.clear = true;
@@ -48,32 +79,55 @@ class NixConfigTest(unittest.TestCase):
           networking.hostName = "unrelatedOption";
         }
         '''
-
         with tempfile.NamedTemporaryFile() as cfg:
             cfg.write(simple_cfg)
             cfg.flush()
             result = nix.nix2python(cfg.name)
-            self.assertIn('storage', result)
-            storage = result['storage']
+            self.assert_simple_example(result)
 
-            self.assertIn('disk', storage)
-            self.assertIn('sda', storage['disk'])
-            self.assertIn('clear', storage['disk']['sda'])
-            self.assertEqual(True, storage['disk']['sda']['clear'])
 
-            self.assertIn('partition', storage)
-            self.assertIn('root', storage['partition'])
-            self.assertIn('targetDevice', storage['partition']['root'])
-            self.assertEqual('disk.sda',
-                             storage['partition']['root']['targetDevice'])
+class XmlConfigTest(unittest.TestCase):
+    # We later delete NixConfigTest from the attributes of the current module,
+    # so we need to make sure we keep a reference as an unbound method.
+    assert_simple_example = NixConfigTest.assert_simple_example
 
-            self.assertIn('fileSystems', result)
-            self.assertIn('/', result['fileSystems'])
-            self.assertIn('storage', result['fileSystems']['/'])
-            self.assertEqual('partition.root',
-                             result['fileSystems']['/']['storage'])
+    def test_simple_example(self):
+        xml = b'''
+        <?xml version='1.0' encoding='utf-8'?>
+        <expr><attrs>
+          <attr name="fileSystems"><attrs>
+            <attr name="/"><attrs>
+              <attr name="storage"><string value="partition.root" /></attr>
+            </attrs></attr>
+          </attrs></attr>
+          <attr name="storage"><attrs>
+            <attr name="disk"><attrs>
+              <attr name="sda"><attrs>
+                <attr name="clear"><bool value="true" /></attr>
+              </attrs></attr>
+            </attrs></attr>
+            <attr name="partition"><attrs>
+              <attr name="root"><attrs>
+                <attr name="targetDevice"><string value="disk.sda" /></attr>
+              </attrs></attr>
+            </attrs></attr>
+          </attrs></attr>
+          <attr name="networking"><attrs>
+            <attr name="hostName"><string value="unrelatedOption" /></attr>
+          </attrs></attr>
+        </attrs></expr>
+        '''
+        result = nix.xml2python(xml)
+        self.assert_simple_example(result, has_unrelated=True)
 
-            self.assertNotIn('networking', result)
+    def test_nix_decode_error(self):
+        xml = "<?xml version='1.0' encoding='utf-8'?><invalid></invalid>"
+        self.assertRaises(nix.NixDecodeError, nix.xml2python, xml)
+
+    def test_not_well_formed(self):
+        onlytextdecl = "<?xml version='1.0' encoding='utf-8'?>"
+        self.assertRaises(ElementTree.ParseError, nix.xml2python, onlytextdecl)
+        self.assertRaises(ElementTree.ParseError, nix.xml2python, "")
 
 
 @unittest.skipUnless(has_nixpkgs(), "no <nixpkgs> available")
