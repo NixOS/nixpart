@@ -53,11 +53,12 @@ def nix2python(path):
     consisting of native Python types.
     """
     expr = r'''
-      let
-        cfg = (import <nixpkgs/nixos/lib/eval-config.nix> {{
-          modules = [ {} ];
-        }}).config;
-      in {{ inherit (cfg) storage fileSystems swapDevices; }}
-    '''.format(path)
-    cmd = ['nix-instantiate', '--eval-only', '--strict', '--xml', '-E', expr]
+      { cfg }: {
+        inherit ((import <nixpkgs/nixos/lib/eval-config.nix> {
+          modules = [ cfg ];
+        }).config) storage fileSystems swapDevices;
+      }
+    '''
+    cmd = ['nix-instantiate', '--eval-only', '--strict', '--xml',
+           '--arg', 'cfg', path, '-E', expr]
     return xml2python(subprocess.check_output(cmd))
