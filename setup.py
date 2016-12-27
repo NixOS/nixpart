@@ -11,6 +11,7 @@ PYTHON_MODULES = [
     'nixpart.nix',
     'nixpart.storage',
     'nixpart.tests.args',
+    'nixpart.tests.nix',
 ]
 
 
