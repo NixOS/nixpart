@@ -28,13 +28,10 @@ def expr2size(expr):
         "yib": "YiB",
     }
 
-    if isinstance(expr, dict):
-        size_acc = Size(0)
-        for unit, sizeval in expr.items():
-            size_acc += Size(str(sizeval) + " " + sizes[unit])
-        return size_acc
-    else:
-        return Size(str(expr) + " MB")
+    size_acc = Size(0)
+    for unit, sizeval in expr.items():
+        size_acc += Size(str(sizeval) + " " + sizes[unit])
+    return size_acc
 
 
 def realize(expr):
