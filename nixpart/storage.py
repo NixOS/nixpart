@@ -4,6 +4,39 @@ from blivet.size import Size
 from blivet.partitioning import do_partitioning
 
 
+def expr2size(expr):
+    """
+    Convert a NixOS device size type to a blivet.size value.
+    """
+    sizes = {
+        "b": "B",
+        "kb": "KB",
+        "mb": "MB",
+        "gb": "GB",
+        "tb": "TB",
+        "pb": "PB",
+        "eb": "EB",
+        "zb": "ZB",
+        "yb": "YB",
+        "kib": "KiB",
+        "mib": "MiB",
+        "gib": "GiB",
+        "tib": "TiB",
+        "pib": "PiB",
+        "eib": "EiB",
+        "zib": "ZiB",
+        "yib": "YiB",
+    }
+
+    if isinstance(expr, dict):
+        size_acc = Size(0)
+        for unit, sizeval in expr.items():
+            size_acc += Size(str(sizeval) + " " + sizes[unit])
+        return size_acc
+    else:
+        return Size(str(expr) + " MB")
+
+
 def realize(expr):
     b = blivet.Blivet()
     b.reset()
@@ -24,11 +57,12 @@ def realize(expr):
         part_attrs = {
             'name': name,
             'parents': [storagetree.get(attrs['targetDevice'])],
-            'grow': attrs['grow'],
         }
 
-        if attrs['size'] is not None:
-            part_attrs['size'] = Size(attrs['size'])
+        if attrs['size'] == "fill":
+            part_attrs['grow'] = True
+        else:
+            part_attrs['size'] = expr2size(attrs['size'])
 
         part = b.new_partition(**part_attrs)
         b.create_device(part)
