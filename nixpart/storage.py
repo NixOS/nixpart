@@ -8,25 +8,10 @@ def expr2size(expr):
     """
     Convert a NixOS device size type to a blivet.size value.
     """
-    sizes = {
-        "b": "B",
-        "kb": "KB",
-        "mb": "MB",
-        "gb": "GB",
-        "tb": "TB",
-        "pb": "PB",
-        "eb": "EB",
-        "zb": "ZB",
-        "yb": "YB",
-        "kib": "KiB",
-        "mib": "MiB",
-        "gib": "GiB",
-        "tib": "TiB",
-        "pib": "PiB",
-        "eib": "EiB",
-        "zib": "ZiB",
-        "yib": "YiB",
-    }
+    sizes = {s.lower(): s for s in [
+        "B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB",
+        "KiB", "MiB", "GiB", "TiB", "PiB", "EiB", "ZiB", "YiB",
+    ]}
 
     size_acc = Size(0)
     for unit, sizeval in expr.items():
