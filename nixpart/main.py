@@ -34,5 +34,8 @@ def main():
 
     devtree = DeviceTree()
     devtree.populate(json.load(json_fp))
-    devtree.realize()
-    print(devtree.devices)
+
+    if args.dry_run:
+        print(devtree.devices)
+    else:
+        devtree.realize()
