@@ -8,7 +8,7 @@ PYTHON_MODULES = [
     'nixpart',
     'nixpart.main',
     'nixpart.args',
-    'nixpart.storage',
+    'nixpart.devtree',
     'nixpart.tests.args',
 ]
 

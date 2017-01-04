@@ -4,7 +4,7 @@ import json
 import subprocess
 
 from nixpart.args import parse_args
-from nixpart.storage import realize
+from nixpart.devtree import realize
 
 
 def main():
