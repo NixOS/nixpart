@@ -7,6 +7,34 @@ from nixpart.args import parse_args
 from nixpart.devtree import DeviceTree
 
 
+def build_config(cfgfile, verbose):
+    """
+    Build a NixOS configuration file and return storage configuration as a JSON
+    filename. If 'verbose' is False, the "-Q" argument is passed to nix-build
+    and stderr is redirected to /dev/null.
+    """
+    cmd = ['nix-build']
+    if not verbose:
+        cmd.append('-Q')
+    cmd += ['--no-out-link', '<nixpkgs/nixos>',
+            '--arg', 'configuration', cfgfile,
+            '-A', 'config.system.build.nixpart-spec']
+    kwargs = {} if verbose else {'stderr': subprocess.DEVNULL}
+    return subprocess.check_output(cmd, **kwargs).rstrip()
+
+
+def config2json(cfgfile, is_json=False, verbose=False):
+    """
+    Convert a given config file to JSON by either building it if it's a Nix
+    expression file or if 'is_json' is True, simply by opening the JSON file.
+    """
+    if is_json:
+        fp = open(cfgfile, 'r')
+    else:
+        fp = open(build_config(cfgfile, verbose), 'r')
+    return json.load(fp)
+
+
 def main():
     args = parse_args()
 
@@ -24,16 +52,12 @@ def main():
             logger.setLevel(level)
             logger.addHandler(handler)
 
-    if args.is_json:
-        json_fp = open(args.nixos_config, 'r')
-    else:
-        cmd = ['nix-build', '--no-out-link', '<nixpkgs/nixos>',
-               '--arg', 'configuration', args.nixos_config,
-               '-A', 'config.system.build.nixpart-spec']
-        json_fp = open(subprocess.check_output(cmd).rstrip(), 'r')
+    expr = config2json(args.nixos_config,
+                       is_json=args.is_json,
+                       verbose=args.verbosity > 0)
 
     devtree = DeviceTree()
-    devtree.populate(json.load(json_fp))
+    devtree.populate(expr)
 
     if args.dry_run:
         print(devtree.devices)
