@@ -10,6 +10,7 @@ PYTHON_MODULES = [
     'nixpart.args',
     'nixpart.devtree',
     'nixpart.tests.args',
+    'nixpart.tests.nixos_config',
 ]
 
 
