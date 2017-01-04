@@ -9,10 +9,10 @@ let
 
     src = ./.;
 
-    checkInputs = [ nix ];
     propagatedBuildInputs = [ python3Packages.blivet ];
     makeWrapperArgs = [ "--set GI_TYPELIB_PATH \"$GI_TYPELIB_PATH\"" ];
   } // lib.optionalAttrs runAllTests {
+    checkInputs = [ nix ];
     NIX_PATH = "nixpkgs=${<nixpkgs>}";
   });
 
