@@ -4,7 +4,7 @@ import json
 import subprocess
 
 from nixpart.args import parse_args
-from nixpart.devtree import realize
+from nixpart.devtree import DeviceTree
 
 
 def main():
@@ -32,4 +32,7 @@ def main():
                '-A', 'config.system.build.nixpart-spec']
         json_fp = open(subprocess.check_output(cmd).rstrip(), 'r')
 
-    realize(json.load(json_fp))
+    devtree = DeviceTree()
+    devtree.populate(json.load(json_fp))
+    devtree.realize()
+    print(devtree.devices)
