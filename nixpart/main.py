@@ -1,7 +1,8 @@
 import sys
 import logging
+import json
+import subprocess
 
-from nixpart.nix import xml2python, nix2python
 from nixpart.args import parse_args
 from nixpart.storage import realize
 
@@ -23,9 +24,12 @@ def main():
             logger.setLevel(level)
             logger.addHandler(handler)
 
-    if args.is_xml:
-        expr = xml2python(open(args.nixos_config, 'r').read())
+    if args.is_json:
+        json_fp = open(args.nixos_config, 'r')
     else:
-        expr = nix2python(args.nixos_config)
+        cmd = ['nix-build', '--no-out-link', '<nixpkgs/nixos>',
+               '--arg', 'configuration', args.nixos_config,
+               '-A', 'config.system.build.nixpart-spec']
+        json_fp = open(subprocess.check_output(cmd).rstrip(), 'r')
 
-    realize(expr)
+    realize(json.load(json_fp))

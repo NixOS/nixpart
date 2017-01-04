@@ -20,8 +20,8 @@ def parse_args(args=None):
     )
 
     parser.add_argument(
-        '-X', '--xml', dest='is_xml', action='store_true',
-        help="The provided NixOS configuration file is in XML format"
+        '-J', '--json', dest='is_json', action='store_true',
+        help="The provided NixOS configuration file is already in JSON format"
     )
 
     parser.add_argument(
