@@ -62,7 +62,8 @@ class DeviceTreeTest(unittest.TestCase):
             part['targetDevice'] = 'disk.test'
         tree.populate({
             'storage': {
-                'disk': {'test': {}},
+                'disk': {'test': {'match': {'allowIncomplete': False,
+                                            'name': 'test'}}},
                 'btrfs': {},
                 'partition': parts
             },
