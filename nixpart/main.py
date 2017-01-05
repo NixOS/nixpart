@@ -57,7 +57,7 @@ def main():
                        verbose=args.verbosity > 0)
 
     devtree = DeviceTree()
-    devtree.populate(expr)
+    devtree.populate(expr, for_mounting=args.mount is not None)
 
     if args.dry_run:
         print(devtree.devices)
