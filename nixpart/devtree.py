@@ -168,3 +168,6 @@ class DeviceTree(object):
     def realize(self):
         do_partitioning(self._blivet)
         self._blivet.do_it()
+
+    def mount(self):
+        pass  # TODO

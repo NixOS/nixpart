@@ -61,5 +61,7 @@ def main():
 
     if args.dry_run:
         print(devtree.devices)
+    elif args.mount is not None:
+        devtree.mount(args.mount)
     else:
         devtree.realize()
