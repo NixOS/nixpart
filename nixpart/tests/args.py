@@ -17,22 +17,22 @@ class ArgsTest(unittest.TestCase):
     def tearDown(self):
         self.cfgfile.close()
 
-    def test_short_mount_with_mountpoint(self):
+    def test_short_mount_with_sysroot(self):
         result = parse_args(['-m/foo', self.cfg])
         self.assertIn('mount', result)
         self.assertEqual('/foo', result.mount)
 
-    def test_short_mount_without_mountpoint(self):
+    def test_short_mount_without_sysroot(self):
         result = parse_args(['-m', self.cfg])
         self.assertIn('mount', result)
         self.assertEqual('/mnt', result.mount)
 
-    def test_long_mount_with_mountpoint(self):
+    def test_long_mount_with_sysroot(self):
         result = parse_args(['--mount=/foo', self.cfg])
         self.assertIn('mount', result)
         self.assertEqual('/foo', result.mount)
 
-    def test_long_mount_without_mountpoint(self):
+    def test_long_mount_without_sysroot(self):
         result = parse_args(['--mount', self.cfg])
         self.assertIn('mount', result)
         self.assertEqual('/mnt', result.mount)
@@ -53,13 +53,13 @@ class ArgsTest(unittest.TestCase):
             stderr = stderr_io.read()
 
         for expect in [
-            "[-m[MOUNTPOINT]]",
-            "-m[MOUNTPOINT], --mount[=MOUNTPOINT]",
+            "[-m[SYSROOT]]",
+            "-m[SYSROOT], --mount[=SYSROOT]",
         ]:
             self.assertIn(expect, stdout)
 
         for expect in [
             "the following arguments are required: nixos_config",
-            "[-m[MOUNTPOINT]]",
+            "[-m[SYSROOT]]",
         ]:
             self.assertIn(expect, stderr)

@@ -68,9 +68,9 @@ def parse_args(args=None):
 
     parser.add_argument(
         '-m', '--mount', dest='mount', action=MountAction,
-        nargs='?', metavar='MOUNTPOINT',
-        help="Don't create partitions/filesystems but only mount them under "
-             "the given path or /mnt if absent."
+        nargs='?', metavar='SYSROOT',
+        help="Don't create partitions/filesystems but only mount them"
+             " relative to the given path (which is \"/mnt\" if absent)."
     )
 
     parser.add_argument(
