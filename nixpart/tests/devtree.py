@@ -59,7 +59,7 @@ class DeviceTreeTest(unittest.TestCase):
             'test3': {'size': {'mb': 10, 'yb': 4}},
         }
         for part in parts.values():
-            part['targetDevice'] = 'disk.test'
+            part['targetDevice'] = {'type': 'disk', 'name': 'test'}
         tree.populate({
             'storage': {
                 'disk': {'test': {'match': {'allowIncomplete': False,

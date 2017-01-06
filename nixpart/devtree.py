@@ -106,6 +106,13 @@ class DeviceTree(object):
             break
         return match_fun(match_on, incomplete=expr['allowIncomplete'])
 
+    def devspec2tuple(self, devspec):
+        """
+        Take device specification from a Nix expression (which is a dict) and
+        return it as a tuple so it's hashable.
+        """
+        return (devspec['type'], devspec['name'])
+
     def populate(self, expr, for_mounting=False):
         """
         Feed the blivet device tree with the various options from the Nix
@@ -119,21 +126,19 @@ class DeviceTree(object):
                 if disk is None:
                     msg = "Could find a device for disk {}.".format(name)
                     raise DeviceTreeError(msg)
-                storagetree['disk.' + name] = disk
+                storagetree[('disk', name)] = disk
 
             for name, attrs in expr['storage']['partition'].items():
-                parent = storagetree.get(attrs['targetDevice'])
+                parent_spec = self.devspec2tuple(attrs['targetDevice'])
+                parent = storagetree.get(parent_spec)
                 if parent is None and not for_mounting:
                     msg = "Couldn't find a device specification for {}."
-                    raise DeviceTreeError(msg.format(attrs['targetDevice']))
+                    raise DeviceTreeError(msg.format('.'.join(parent_spec)))
 
                 if parent.format.type is None:
                     self._blivet.initialize_disk(parent)
 
-                part_attrs = {
-                    'name': name,
-                    'parents': [storagetree.get(attrs['targetDevice'])],
-                }
+                part_attrs = {'name': name, 'parents': [parent]}
 
                 if attrs['size'] == "fill":
                     part_attrs['grow'] = True
@@ -142,10 +147,11 @@ class DeviceTree(object):
 
                 part = self._blivet.new_partition(**part_attrs)
                 self._blivet.create_device(part)
-                storagetree['partition.' + name] = part
+                storagetree[('partition', name)] = part
 
             for name, attrs in expr['storage']['btrfs'].items():
-                parents = [storagetree.get(d) for d in attrs['devices']]
+                parents = [storagetree.get(self.devspec2tuple(devspec))
+                           for devspec in attrs['devices']]
 
                 for parent in parents:
                     fmt = blivet.formats.get_format(
@@ -158,7 +164,7 @@ class DeviceTree(object):
                     metadata_level=attrs['metadata']
                 )
                 self._blivet.create_device(btrfs)
-                storagetree['btrfs.' + name] = btrfs
+                storagetree[('btrfs', name)] = btrfs
 
         for mountpoint, attrs in expr['fileSystems'].items():
             if for_mounting:
@@ -173,9 +179,9 @@ class DeviceTree(object):
                     device.format.mountpoint = mountpoint
                 continue
 
-            if attrs['storage'].startswith('btrfs.'):
+            if attrs['storage']['type'] == 'btrfs':
                 continue
-            target = storagetree.get(attrs['storage'])
+            target = storagetree.get(self.devspec2tuple(attrs['storage']))
             fmt = blivet.formats.get_format(attrs['fsType'],
                                             device=target.path)
             label = attrs.get('label')
