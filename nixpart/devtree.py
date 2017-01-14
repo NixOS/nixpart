@@ -167,14 +167,9 @@ class DeviceTree(object):
                 storagetree[('btrfs', name)] = btrfs
 
         for mountpoint, attrs in expr['fileSystems'].items():
+            uuid = attrs['storage']['uuid']
             if for_mounting:
-                label = attrs.get('label')
-                if label is None:
-                    msg = "Mounting {} without a label is not supported yet."
-                    formatted = msg.format('fileSystems.' + mountpoint)
-                    raise DeviceTreeError(formatted)
-
-                device = self._blivet.devicetree.get_device_by_label(label)
+                device = self._blivet.devicetree.get_device_by_uuid(uuid)
                 if device is not None:
                     device.format.mountpoint = mountpoint
                 continue
@@ -183,7 +178,8 @@ class DeviceTree(object):
                 continue
             target = storagetree.get(self.devspec2tuple(attrs['storage']))
             fmt = blivet.formats.get_format(attrs['fsType'],
-                                            device=target.path)
+                                            device=target.path,
+                                            new_uuid=uuid)
             label = attrs.get('label')
             if label is not None:
                 fmt.label = label
