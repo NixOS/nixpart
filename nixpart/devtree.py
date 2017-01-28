@@ -179,7 +179,7 @@ class DeviceTree(object):
             target = storagetree.get(self.devspec2tuple(attrs['storage']))
             fmt = blivet.formats.get_format(attrs['fsType'],
                                             device=target.path,
-                                            new_uuid=uuid)
+                                            uuid=uuid)
             label = attrs.get('label')
             if label is not None:
                 fmt.label = label
