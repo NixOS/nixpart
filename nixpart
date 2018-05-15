@@ -26,8 +26,6 @@ def mkattr(attrs, pre, post, ind):
 def nixify(data, ind=0):
     out = ""
     if isinstance(data, dict):
-        if len(data) == 0:
-            out += "{}"
         if len(data) == 0 or (len(data) == 1 and
                               not isinstance(data.values()[0], dict)):
             out += "{" + mkattr(data, " ", " ", ind) + "}"
@@ -163,6 +161,7 @@ def main():
 
     if args.printnixos:
         sys.stdout.write(get_nixos_config(storage))
+
 
 if __name__ == '__main__':
     main()
